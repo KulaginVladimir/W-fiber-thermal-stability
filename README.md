@@ -1,5 +1,9 @@
 # Stability of tungsten nanofibres under rapid heating
 
+
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.24180284.svg)](https://doi.org/10.5281/zenodo.24180284)
+
+
 ## Overview
 
 This repository contains LAMMPS scripts and processed molecular dynamics (MD) data used to study the rapid heating and destruction of tungsten nanofibres containing helium bubbles.
