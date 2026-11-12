@@ -42,7 +42,7 @@ Python dependencies for MD calculations are listed in `requirements-md.txt`. The
 
 ## MD calculations
 
-The simulations were performed with LAMMPS (10 Sep 2025) using `pair_style eam/he`. Download `WHHe_TMB_JPCM_2025.eam.he` from the [NIST Interatomic Potentials Repository](https://www.ctcms.nist.gov/potentials/entry/2026--Tirumala-A-S-Shattock-O-Mason-D-R-et-al--W-H-He/) and place it at the location expected by the Slurm scripts (or update the local potential path).
+The simulations were performed with [LAMMPS (10 Sep 2025)](https://github.com/lammps/lammps/releases/tag/patch_10Sep2025) using `pair_style eam/he`. Download `WHHe_TMB_JPCM_2025.eam.he` from the [NIST Interatomic Potentials Repository](https://www.ctcms.nist.gov/potentials/entry/2026--Tirumala-A-S-Shattock-O-Mason-D-R-et-al--W-H-He/) and place it at the location expected by the Slurm scripts (or update the local potential path).
 
 The `melting/` directory includes ten NPH solid–liquid coexistence runs and their phase diagnostics. Recalculate the reported melting-temperature estimate with:
 
