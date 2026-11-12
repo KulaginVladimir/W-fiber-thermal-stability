@@ -1,0 +1,28 @@
+potential: TMB
+single_case: phi006
+single_state: he2
+
+input_template: ../../single_fiber/prepare/structures/{potential}/{single_case}/s{seed}/data.{single_state}
+output_template: structures/{potential}/{case}/data.pair
+summary_file: structures/summary.csv
+
+lattice_parameter_angstrom: 3.14422129866574
+radius_lattice: 16
+box_padding_angstrom: 300.0
+
+pairs:
+  - [42, 43]
+  - [44, 45]
+  - [46, 47]
+  - [48, 49]
+  - [50, 51]
+
+gaps:
+  - gap_angstrom: 100.0
+    thermal_seed_base: 300000
+  - gap_angstrom: 200.0
+    thermal_seed_base: 310000
+  - gap_angstrom: 300.0
+    thermal_seed_base: 320000
+  - gap_angstrom: 400.0
+    thermal_seed_base: 360000

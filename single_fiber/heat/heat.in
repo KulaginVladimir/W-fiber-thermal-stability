@@ -1,0 +1,186 @@
+clear
+units           metal
+dimension       3
+boundary        f f p
+atom_style      atomic
+atom_modify     map array
+
+processors      2 2 8
+
+variable        heat_rate equal ${alpha}
+
+read_restart    ${restart_in}
+
+group           W_atoms type 1
+group           He_atoms type 2
+group           W_cluster empty
+group           W_heat empty
+
+fix             heatflag all property/atom i_heatflag
+
+pair_style      eam/he
+pair_coeff      * * WHHe_TMB_JPCM_2025.eam.he W He
+
+variable        Cz python check_connectivity_z
+python          check_connectivity_z input 1 SELF return v_Cz format pf file connectivity.py
+
+neigh_modify    delay 0 every 1 check yes
+
+reset_timestep  0
+timestep        0.001
+
+compute         Tall all temp/com
+compute_modify  Tall dynamic/dof yes extra/dof 0
+compute         Tw W_atoms temp/com
+compute_modify  Tw dynamic/dof yes extra/dof 0
+compute         kin_W W_atoms ke
+compute         kin_He He_atoms ke
+compute         pe_atom all pe/atom
+compute         ke_atom all ke/atom
+
+variable        N_W equal count(W_atoms)
+variable        N_He equal count(He_atoms)
+
+compute         clW W_atoms cluster/atom 3.7
+compute         chW W_atoms chunk/atom c_clW compress yes
+compute         sizeW W_atoms property/chunk chW count
+compute         sizeW_atom W_atoms chunk/spread/atom chW c_sizeW
+compute         largestW W_atoms reduce max c_sizeW_atom
+
+variable        Nlargest equal c_largestW
+variable        is_cluster atom "(type == 1) && (c_sizeW_atom >= v_Nlargest-0.5)"
+variable        is_heat atom "(type == 1) && (i_heatflag > 0)"
+
+run             0 post no
+fix             ref all store/state 0 c_pe_atom c_ke_atom
+variable        Uexc atom c_pe_atom-f_ref[1]
+fix             energy W_atoms ave/chunk 250 1 250 chW c_pe_atom f_ref[1] f_ref[2] v_Uexc norm none ave one file ${out_dir}/w_cluster_energy.txt format " %.16g"
+run             0 post no
+python          check_connectivity_z invoke
+
+group           W_cluster variable is_cluster
+group           W_heat variable is_heat
+
+variable        Nheat equal count(W_heat)
+
+compute         Tcluster W_cluster temp/com
+compute_modify  Tcluster dynamic/dof yes extra/dof 0
+compute         Theat W_heat temp/com
+compute_modify  Theat dynamic/dof yes extra/dof 0
+
+variable        Time equal time
+variable        T_all equal c_Tall
+variable        T_W equal c_Tw
+variable        T_cluster equal c_Tcluster
+variable        T_heat equal c_Theat
+variable        KE_W equal c_kin_W
+variable        KE_He equal c_kin_He
+variable        PE equal pe
+variable        KE equal ke
+variable        Etot equal etotal
+
+variable        eflux equal 3.0*v_Nheat*8.617333262e-5*v_heat_rate
+variable        heating equal 1.0
+variable        eflux_applied equal v_heating*v_eflux
+
+python          source ejecta.py
+python          track_products input 1 SELF format p exists
+python          stop_he input 1 SELF format p exists
+
+fix             diag all print 500 &
+                "${Time} ${N_He} ${N_W} ${Nlargest} ${Nheat} ${T_all} ${T_W} ${T_cluster} ${T_heat} ${heating} ${eflux_applied} ${KE_He} ${KE_W} ${PE} ${KE} ${Etot}" &
+                file ${out_dir}/heat.txt screen no &
+                title "time_ps NHe_box NW_box Nlargest Nheat T_all T_W T_cluster T_heat heating eflux_eV_per_ps KE_He KE_W PE KE Etot"
+
+fix             nve_all all nve
+
+thermo          500
+thermo_style    custom step time atoms c_Tall c_Tw c_Tcluster c_Theat pe ke etotal
+thermo_modify   lost warn temp Tall
+
+# dump            mech all custom 250 ${out_dir}/dump_mech.lammpstrj id type x y z
+# dump_modify     mech element W He format line "%d %d %.4f %.4f %.4f"
+
+print           "time_ps Nlargest Cz Nheat T_cluster T_heat" &
+                file ${out_dir}/structure.txt screen no
+
+variable        cycle loop 50000
+label           heat_loop
+
+run             0 post no
+python          check_connectivity_z invoke
+
+group           W_cluster clear
+group           W_cluster variable is_cluster
+group           W_heat clear
+group           W_heat variable is_heat
+
+print           "${Time} ${Nlargest} ${Cz} ${Nheat} ${T_cluster} ${T_heat}" &
+                append ${out_dir}/structure.txt screen no
+
+if              "${Cz} < 0.5" then "jump SELF heat_off_cz"
+
+python          track_products invoke
+
+if              "${T_heat} >= ${Tmax}" then "jump SELF heat_off_tmax"
+
+fix             heat W_heat ehex 1 ${eflux}
+fix             drift W_heat momentum 1 linear 1 1 0
+
+run             500
+
+unfix           drift
+unfix           heat
+
+next            cycle
+jump            SELF heat_loop
+
+label           heat_off_cz
+
+variable        Cz_stop equal ${Cz}
+variable        heating equal 0.0
+
+print           "reason time_ps T_cluster T_heat Cz" &
+                file ${out_dir}/heat_off.txt screen no
+print           "Cz ${Time} ${T_cluster} ${T_heat} ${Cz_stop}" &
+                append ${out_dir}/heat_off.txt screen no
+
+python          stop_he invoke
+python          track_products invoke
+group           W_heat clear
+jump            SELF observation
+
+label           heat_off_tmax
+
+variable        Cz_stop equal ${Cz}
+variable        heating equal 0.0
+
+print           "reason time_ps T_cluster T_heat Cz" &
+                file ${out_dir}/heat_off.txt screen no
+print           "Tmax ${Time} ${T_cluster} ${T_heat} ${Cz_stop}" &
+                append ${out_dir}/heat_off.txt screen no
+
+python          stop_he invoke
+group           W_heat clear
+jump            SELF observation
+
+label           observation
+
+variable        obs loop 250
+label           observation_loop
+
+run             1000
+run             0 post no
+
+group           W_cluster clear
+group           W_cluster variable is_cluster
+
+print           "${Time} ${Nlargest} ${Cz_stop} 0 ${T_cluster} 0" &
+                append ${out_dir}/structure.txt screen no
+
+python          track_products invoke
+
+next            obs
+jump            SELF observation_loop
+
+write_data      ${out_dir}/final.data

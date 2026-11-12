@@ -1,0 +1,83 @@
+clear
+units           metal
+dimension       3
+boundary        p p p
+atom_style      atomic
+atom_modify     map array
+
+variable        a0 equal 3.14422129866574
+variable        Tcold equal 0.5*${Tinit}
+variable        Thot equal 1.25*${Tinit}
+
+timestep        0.001
+
+lattice         bcc ${a0}
+region          box block 0 16 0 16 0 40 units lattice
+create_box      1 box
+create_atoms    1 box
+mass            1 183.84
+
+pair_style      eam/he
+pair_coeff      * * ${potfile} W
+
+neighbor        2.0 bin
+neigh_modify    delay 0 every 1 check yes
+
+thermo          1000
+thermo_style    custom step time temp press pe ke etotal vol lx ly lz
+thermo_modify   flush yes
+
+variable        zmid equal 0.5*(zlo+zhi)
+region          lower block INF INF INF INF INF ${zmid} units box
+group           solid region lower
+group           liquid subtract all solid
+
+velocity        all create ${Tinit} ${seed} mom yes rot no dist gaussian
+
+# Prepare solid-liquid coexistence state.
+fix             prep_nph all nph iso 0.0 0.0 1.0
+fix             prep_cold solid temp/berendsen ${Tcold} ${Tcold} 0.1
+fix             prep_hot liquid temp/berendsen ${Thot} ${Thot} 0.1
+run             10000
+unfix           prep_cold
+unfix           prep_hot
+
+fix             equil_solid solid temp/berendsen ${Tinit} ${Tinit} 0.1
+fix             equil_liquid liquid temp/berendsen ${Tinit} ${Tinit} 0.1
+run             10000
+unfix           equil_solid
+unfix           equil_liquid
+unfix           prep_nph
+
+reset_timestep  0
+
+compute         csp all centro/atom bcc
+compute         cspavg all reduce ave c_csp
+compute         pea all pe/atom
+
+variable        Temp equal temp
+variable        Press equal press
+variable        Vol equal vol
+variable        PEatom equal pe/count(all)
+variable        CSPavg equal c_cspavg
+
+fix             diag all ave/time 100 1 100 v_Temp v_Press v_Vol v_PEatom v_CSPavg file ${out_dir}/nph.txt
+
+compute         zbin all chunk/atom bin/1d z lower 0.0125 units reduced
+fix             profile all ave/chunk 10000 1 10000 zbin c_csp c_pea norm sample file ${out_dir}/phase_profile.txt
+
+thermo          1000
+thermo_style    custom step time temp press pe ke etotal vol lx ly lz c_cspavg
+thermo_modify   flush yes
+
+write_data      ${out_dir}/initial_coexistence.data
+
+# NPH coexistence at zero pressure.
+fix             coex all nph iso 0.0 0.0 1.0
+run             500000
+unfix           coex
+
+unfix           profile
+unfix           diag
+
+write_data      ${out_dir}/final.data

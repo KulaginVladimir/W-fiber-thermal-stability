@@ -1,0 +1,11 @@
+potential,case,state,geometry_seed,thermal_seed,data_file,w_initial,w_final,w_removed,void_fraction,he_atoms,he_per_vacancy,bubble_count,bubble_d_mean_A,bubble_d_std_A,bubble_d_min_A,bubble_d_max_A
+TMB,phi000,he0,0,100000,structures/TMB/phi000/s0/data.he0,101367,101367,0,0.0,0,0.0,0,,,,
+TMB,phi000,he0,1,100001,structures/TMB/phi000/s1/data.he0,101367,101367,0,0.0,0,0.0,0,,,,
+TMB,phi000,he0,2,100002,structures/TMB/phi000/s2/data.he0,101367,101367,0,0.0,0,0.0,0,,,,
+TMB,phi000,he0,3,100003,structures/TMB/phi000/s3/data.he0,101367,101367,0,0.0,0,0.0,0,,,,
+TMB,phi000,he0,4,100004,structures/TMB/phi000/s4/data.he0,101367,101367,0,0.0,0,0.0,0,,,,
+TMB,phi000,he0,5,100005,structures/TMB/phi000/s5/data.he0,101367,101367,0,0.0,0,0.0,0,,,,
+TMB,phi000,he0,6,100006,structures/TMB/phi000/s6/data.he0,101367,101367,0,0.0,0,0.0,0,,,,
+TMB,phi000,he0,7,100007,structures/TMB/phi000/s7/data.he0,101367,101367,0,0.0,0,0.0,0,,,,
+TMB,phi000,he0,8,100008,structures/TMB/phi000/s8/data.he0,101367,101367,0,0.0,0,0.0,0,,,,
+TMB,phi000,he0,9,100009,structures/TMB/phi000/s9/data.he0,101367,101367,0,0.0,0,0.0,0,,,,

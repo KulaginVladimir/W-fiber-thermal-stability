@@ -1,0 +1,113 @@
+potential:
+  name: TMB
+  lattice_parameter_angstrom: 3.14422129866574
+
+fiber:
+  radius_lattice: 16
+  length_cells: 63
+  box_padding_xy_angstrom: 300.0
+
+thermal_seed_base: 100000
+
+helium:
+  seed: 4242
+  min_distance_lattice: 0.5
+
+cases:
+  - name: phi000
+    geometry_seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+    fillings: [0.0]
+    bubbles:
+      void_fraction: 0.0
+      min_surface_ligament_ratio: 1.0
+      diameter_fraction:
+        mean: 0.15
+        std: 0.05
+        min: 0.03
+        max: 0.2
+
+  - name: phi003
+    geometry_seeds: [42, 43, 44, 45, 46, 47, 48, 49, 50, 51]
+    fillings: [0.0, 1.0, 2.0]
+    bubbles:
+      void_fraction: 0.03
+      min_surface_ligament_ratio: 1.0
+      diameter_fraction:
+        mean: 0.15
+        std: 0.05
+        min: 0.03
+        max: 0.2
+
+  - name: phi006
+    geometry_seeds: [42, 43, 44, 45, 46, 47, 48, 49, 50, 51]
+    fillings: [0.0, 1.0, 2.0]
+    bubbles:
+      void_fraction: 0.06
+      min_surface_ligament_ratio: 1.0
+      diameter_fraction:
+        mean: 0.15
+        std: 0.05
+        min: 0.03
+        max: 0.2
+
+  - name: phi009
+    geometry_seeds: [42, 43, 44, 45, 46, 47, 48, 49, 50, 51]
+    fillings: [0.0, 1.0, 2.0]
+    bubbles:
+      void_fraction: 0.09
+      min_surface_ligament_ratio: 1.0
+      diameter_fraction:
+        mean: 0.15
+        std: 0.05
+        min: 0.03
+        max: 0.2
+
+  - name: phi012
+    geometry_seeds: [42, 43, 44, 45, 46, 47, 48, 49, 50, 51]
+    fillings: [0.0, 1.0, 2.0]
+    bubbles:
+      void_fraction: 0.12
+      min_surface_ligament_ratio: 1.0
+      diameter_fraction:
+        mean: 0.15
+        std: 0.05
+        min: 0.03
+        max: 0.2
+
+  - name: phi006_df023
+    geometry_seeds: [42, 43, 44, 45, 46, 47, 48, 49, 50, 51]
+    fillings: [2.0]
+    bubbles:
+      void_fraction: 0.06
+      min_surface_ligament_ratio: 1.0
+      diameter_fraction:
+        mean: 0.23
+        std: 0.0766667
+        min: 0.046
+        max: 0.3066667
+
+  - name: phi006_df030
+    geometry_seeds: [42, 43, 44, 45, 46, 47, 48, 49, 50, 51]
+    fillings: [2.0]
+    bubbles:
+      void_fraction: 0.06
+      min_surface_ligament_ratio: 1.0
+      diameter_fraction:
+        mean: 0.3
+        std: 0.1
+        min: 0.06
+        max: 0.4
+
+  - name: phi006_l144
+    fiber:
+      length_cells: 144
+    geometry_seeds: [42, 43, 44]
+    fillings: [0.0, 2.0]
+    bubbles:
+      void_fraction: 0.06
+      min_surface_ligament_ratio: 1.0
+      diameter_fraction:
+        mean: 0.15
+        std: 0.05
+        min: 0.03
+        max: 0.2

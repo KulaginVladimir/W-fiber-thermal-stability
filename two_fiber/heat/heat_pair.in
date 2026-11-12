@@ -1,0 +1,192 @@
+clear
+units           metal
+dimension       3
+boundary        f f p
+atom_style      atomic
+atom_modify     map array
+
+processors      2 2 8
+
+variable        heat_rate equal ${alpha}
+
+read_restart    ${restart_in}
+
+group           source_W type 1
+group           source_He type 2
+group           target_W type 3
+group           target_He type 4
+group           source_cluster empty
+group           source_heat empty
+group           target union target_W target_He
+
+fix             heatflag all property/atom i_heatflag
+
+pair_style      eam/he
+pair_coeff      * * WHHe_TMB_JPCM_2025.eam.he W He W He
+neigh_modify    delay 0 every 1 check yes
+
+variable        Cz_source python check_connectivity_source
+python          check_connectivity_source input 1 SELF return v_Cz_source format pf file connectivity_pair.py
+
+reset_timestep  0
+timestep        0.001
+
+compute         T_all all temp/com
+compute_modify  T_all dynamic/dof yes extra/dof 0
+compute         T_source source_W temp/com
+compute_modify  T_source dynamic/dof yes extra/dof 0
+compute         T_target target_W temp/com
+compute_modify  T_target dynamic/dof yes extra/dof 0
+compute         com_target target_W com
+compute         ke_atom all ke/atom
+compute         pe_atom all pe/atom
+compute         E_target target reduce sum c_ke_atom c_pe_atom
+compute         E_targetW target_W reduce sum c_ke_atom c_pe_atom
+variable        Ktarget equal c_E_target[1]
+variable        Utarget equal c_E_target[2]
+variable        KtargetW equal c_E_targetW[1]
+variable        UtargetW equal c_E_targetW[2]
+
+variable        N_source_He equal count(source_He)
+variable        N_target_He equal count(target_He)
+
+compute         cl_source source_W cluster/atom 3.7
+compute         ch_source source_W chunk/atom c_cl_source compress yes
+compute         size_source source_W property/chunk ch_source count
+compute         size_source_atom source_W chunk/spread/atom ch_source c_size_source
+compute         largest_source source_W reduce max c_size_source_atom
+
+variable        Nlargest_source equal c_largest_source
+variable        is_source_cluster atom "(type == 1) && (c_size_source_atom >= v_Nlargest_source-0.5)"
+variable        is_source_heat atom "(type == 1) && (i_heatflag > 0)"
+
+run             0 post no
+python          check_connectivity_source invoke
+
+group           source_cluster variable is_source_cluster
+group           source_heat variable is_source_heat
+
+variable        Nheat_source equal count(source_heat)
+
+compute         T_source_cluster source_cluster temp/com
+compute_modify  T_source_cluster dynamic/dof yes extra/dof 0
+compute         T_source_heat source_heat temp/com
+compute_modify  T_source_heat dynamic/dof yes extra/dof 0
+
+variable        Time equal time
+variable        Tsource_cluster equal c_T_source_cluster
+variable        Tsource_heat equal c_T_source_heat
+variable        Ttarget equal c_T_target
+
+variable        eflux equal 3.0*v_Nheat_source*8.617333262e-5*v_heat_rate
+variable        heating equal 1.0
+variable        eflux_applied equal v_heating*v_eflux
+
+variable        x_target equal c_com_target[1]
+variable        y_target equal c_com_target[2]
+
+variable        r_target atom sqrt((x-v_x_target)*(x-v_x_target)+(y-v_y_target)*(y-v_y_target))
+compute         Rtarget0 target_W reduce max v_r_target
+run             0 post no
+variable        Rtarget_monitor equal $(c_Rtarget0+10.0)
+uncompute       Rtarget0
+
+variable        source_w_near_target atom "(type == 1) && ((x-v_x_target)*(x-v_x_target)+(y-v_y_target)*(y-v_y_target) < v_Rtarget_monitor*v_Rtarget_monitor)"
+variable        source_he_near_target atom "(type == 2) && ((x-v_x_target)*(x-v_x_target)+(y-v_y_target)*(y-v_y_target) < v_Rtarget_monitor*v_Rtarget_monitor)"
+
+compute         NsourceWNearTarget all reduce sum v_source_w_near_target
+compute         NsourceHeNearTarget all reduce sum v_source_he_near_target
+
+variable        NsourceW_near_target equal c_NsourceWNearTarget
+variable        NsourceHe_near_target equal c_NsourceHeNearTarget
+
+python          source ejecta_pair.py
+python          track_products input 1 SELF format p exists
+python          stop_he input 1 SELF format p exists
+
+print           "Cz_source T_source_cluster T_source_heat T_target NHe_source NHe_target K_target_eV U_target_eV K_targetW_eV U_targetW_eV" file initial_state.txt screen no
+print           "${Cz_source} ${Tsource_cluster} ${Tsource_heat} ${Ttarget} ${N_source_He} ${N_target_He} ${Ktarget} ${Utarget} ${KtargetW} ${UtargetW}" append initial_state.txt screen no
+
+print           "time_ps NHe_source Nheat_source Nlargest_source T_source_cluster T_source_heat Cz_source NHe_target T_target x_target y_target NsourceHe_near_target NsourceW_near_target heating eflux_eV_per_ps K_target_eV U_target_eV K_targetW_eV U_targetW_eV" file heat.txt screen no
+
+fix             nve_all all nve
+fix             hold_target_xy target_W momentum 1 linear 1 1 0
+balance         1.1 shift xy 10 1.1
+fix             lb all balance 5000 1.2 shift xy 10 1.1
+
+thermo          500
+thermo_style    custom step time atoms c_T_all c_T_source c_T_source_cluster c_T_source_heat c_T_target pe ke etotal f_lb f_lb[3]
+thermo_modify   lost warn temp T_all
+
+variable        cycle loop 50000
+label           heat_loop
+
+run             0 post no
+python          check_connectivity_source invoke
+
+group           source_cluster clear
+group           source_cluster variable is_source_cluster
+group           source_heat clear
+group           source_heat variable is_source_heat
+run             0 post no
+
+print           "${Time} ${N_source_He} ${Nheat_source} ${Nlargest_source} ${Tsource_cluster} ${Tsource_heat} ${Cz_source} ${N_target_He} ${Ttarget} ${x_target} ${y_target} ${NsourceHe_near_target} ${NsourceW_near_target} ${heating} ${eflux_applied} ${Ktarget} ${Utarget} ${KtargetW} ${UtargetW}" append heat.txt screen no
+
+if              "${Cz_source} < 0.5" then "jump SELF heat_off_cz"
+
+python          track_products invoke
+
+if              "${Tsource_heat} >= ${Tmax}" then "jump SELF heat_off_tmax"
+
+fix             heat source_heat ehex 1 ${eflux}
+fix             drift source_heat momentum 1 linear 1 1 0
+
+run             500
+
+unfix           drift
+unfix           heat
+
+next            cycle
+jump            SELF heat_loop
+
+label           heat_off_cz
+
+variable        Cz_source_stop equal ${Cz_source}
+variable        heating equal 0.0
+
+print           "stage reason time_ps T_source_cluster T_source_heat T_target Cz_source" file heat_off.txt screen no
+print           "break Cz ${Time} ${Tsource_cluster} ${Tsource_heat} ${Ttarget} ${Cz_source_stop}" append heat_off.txt screen no
+
+python          stop_he invoke
+python          track_products invoke
+group           source_heat clear
+jump            SELF observation
+
+label           heat_off_tmax
+
+variable        Cz_source_stop equal ${Cz_source}
+variable        heating equal 0.0
+
+print           "stage reason time_ps T_source_cluster T_source_heat T_target Cz_source" file heat_off.txt screen no
+print           "break Tmax ${Time} ${Tsource_cluster} ${Tsource_heat} ${Ttarget} ${Cz_source_stop}" append heat_off.txt screen no
+
+python          stop_he invoke
+group           source_heat clear
+jump            SELF observation
+
+label           observation
+
+print           "time_ps NHe_source NHe_target T_target x_target y_target NsourceHe_near_target NsourceW_near_target K_target_eV U_target_eV K_targetW_eV U_targetW_eV" file impact.txt screen no
+
+variable        obs_next equal step+1000
+fix             impact_log all print v_obs_next "${Time} ${N_source_He} ${N_target_He} ${Ttarget} ${x_target} ${y_target} ${NsourceHe_near_target} ${NsourceW_near_target} ${Ktarget} ${Utarget} ${KtargetW} ${UtargetW}" append impact.txt screen no
+
+thermo_style    custom step time atoms c_T_all c_T_target pe ke etotal f_lb f_lb[3]
+thermo_modify   lost warn temp T_all
+
+run             1000000
+
+unfix           impact_log
+
+print           "final none ${Time} ${Tsource_cluster} ${Tsource_heat} ${Ttarget} ${Cz_source_stop}" append heat_off.txt screen no
+write_data      final.data

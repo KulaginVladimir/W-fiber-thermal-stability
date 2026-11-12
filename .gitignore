@@ -1,0 +1,50 @@
+# Python environments and caches
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+
+# Local settings and operating-system files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Full MD trajectories and run outputs
+/single_fiber/heat/results/
+/single_fiber/prepare/prepared/
+/single_fiber/prepare/structures/
+/single_fiber/tests
+/two_fiber/heat/results/
+/two_fiber/prepare/prepared/
+/two_fiber/prepare/structures/
+/potentials
+/postprocessing_copy
+/eos/
+*.lammpstrj
+*.lammpstrj.gz
+dump_*
+log.lammps
+log.*.lammps
+*.restart
+*.restart.*
+slurm-*.out
+*.out
+*.err
+
+# Keep melting diagnostics, omit atomic snapshots
+/melting/results_nph/**/initial_coexistence.data
+/melting/results_nph/**/final.data
+
+# Download the interatomic potential from NIST
+*.eam.he
+
+# Local submission documents and OVITO rendering notebook
+/paper_JNM/
+/postprocessing/ovito_renders.ipynb

@@ -1,0 +1,45 @@
+processors      2 2 8
+
+units           metal
+dimension       3
+boundary        f f p
+atom_style      atomic
+atom_modify     map array
+
+read_data       ${data_in}
+
+group           W type 1
+
+mass            1 183.84
+mass            2 4.002602
+
+pair_style      eam/he
+pair_coeff      * * WHHe_TMB_JPCM_2025.eam.he W He
+neighbor        2.0 bin
+
+compute         Temperature all temp
+compute_modify  Temperature dynamic/dof yes extra/dof 0
+
+neigh_modify    delay 0 every 1 check yes
+
+thermo          10000
+thermo_style    custom step time atoms c_Temperature pe ke etotal
+thermo_modify   lost ignore temp Temperature
+
+minimize        1.0e-10 1.0e-8 10000 100000
+
+reset_timestep  0
+timestep        0.001
+
+velocity        all create 10.0 ${thermal_seed} mom yes rot yes dist gaussian
+
+fix             int all nve
+fix             bath W langevin 10.0 300.0 0.1 ${thermal_seed} zero yes
+run             20000
+
+unfix           bath
+fix             bath W langevin 300.0 300.0 0.1 ${thermal_seed} zero yes
+run             1000000
+
+write_restart   ${restart_out}
+write_data      ${data_out}

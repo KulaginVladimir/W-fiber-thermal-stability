@@ -1,0 +1,54 @@
+units metal
+atom_style atomic
+boundary f f p
+
+processors 2 2 8
+
+read_data ${DATA}
+
+pair_style eam/he
+pair_coeff * * WHHe_TMB_JPCM_2025.eam.he W He W He
+
+group source_W type 1
+group source_He type 2
+group target_W type 3
+group target_He type 4
+
+neighbor 2.0 bin
+neigh_modify delay 0 every 1 check yes
+
+timestep 0.001
+
+compute T_source source_W temp
+compute T_target target_W temp
+
+variable NHe_source equal count(source_He)
+variable NHe_target equal count(target_He)
+
+thermo 10000
+thermo_style custom step time atoms c_T_source c_T_target v_NHe_source v_NHe_target pe ke etotal
+thermo_modify lost warn flush yes
+
+min_style cg
+minimize 1.0e-8 1.0e-10 1000 10000
+
+reset_timestep 0
+velocity all create 10.0 ${SEED_INIT} mom yes rot no dist gaussian
+
+fix integrate all nve
+fix bath_source source_W langevin 10.0 300.0 0.1 ${SEED_RAMP_SOURCE} zero yes
+fix bath_target target_W langevin 10.0 300.0 0.1 ${SEED_RAMP_TARGET} zero yes
+run 20000
+
+unfix bath_source
+unfix bath_target
+fix bath_source source_W langevin 300.0 300.0 0.1 ${SEED_HOLD_SOURCE} zero yes
+fix bath_target target_W langevin 300.0 300.0 0.1 ${SEED_HOLD_TARGET} zero yes
+run 1000000
+
+unfix bath_source
+unfix bath_target
+run 10000
+
+write_restart 300K.restart
+write_data data.300K
