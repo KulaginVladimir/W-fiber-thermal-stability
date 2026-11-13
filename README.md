@@ -20,7 +20,7 @@ two_fiber/              Preparation and heating of fibre pairs
   prepare/              Geometry generation and thermalisation
   heat/                 Heating and debris impact analysis
 melting/                NPH solid–liquid coexistence calculations and results
-postprocessing/         Analysis notebooks
+postprocessing/         Notebooks for the analysis of the results
   pp_data/              Processed data for the figures
   figures/              Figures and representative OVITO snapshots
 ```
