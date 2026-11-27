@@ -118,6 +118,9 @@ thermo          500
 thermo_style    custom step time atoms c_T_all c_T_source c_T_source_cluster c_T_source_heat c_T_target pe ke etotal f_lb f_lb[3]
 thermo_modify   lost warn temp T_all
 
+dump            mech all custom 1000 dump_mech.lammpstrj.gz id type x y z vx vy vz
+dump_modify     mech element W He W He format line "%d %d %.4f %.4f %.4f %.5f %.5f %.5f"
+
 variable        cycle loop 50000
 label           heat_loop
 

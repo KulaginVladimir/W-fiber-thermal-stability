@@ -8,7 +8,7 @@
 
 This repository contains LAMMPS scripts and processed molecular dynamics (MD) data used to study the rapid heating and destruction of tungsten nanofibres containing helium bubbles.
 
-The calculations reported in the manuscript use the W–H–He potential by Tirumala et al. (*Journal of Physics: Condensed Matter* **38** (2026) 075703. [DOI: 10.1088/1361-648X/ae37bc](https://doi.org/10.1088/1361-648X/ae37bc)). Full MD trajectories are excluded from the repository. The processed data needed to reproduce the manuscript figures are provided.
+The calculations reported in the manuscript use the W–H–He potential by Tirumala et al. (*Journal of Physics: Condensed Matter* **38** (2026) 075703. [DOI: 10.1088/1361-648X/ae37bc](https://doi.org/10.1088/1361-648X/ae37bc)). Full MD trajectories are excluded from the repository. The processed data needed to reproduce the manuscript and supplementary figures are provided.
 
 ## Repository structure
 
@@ -19,8 +19,9 @@ single_fiber/           Preparation and heating of individual fibres
 two_fiber/              Preparation and heating of fibre pairs
   prepare/              Geometry generation and thermalisation
   heat/                 Heating and debris impact analysis
-melting/                NPH solid–liquid coexistence calculations and results
+melting/                NPH solid–liquid coexistence calculations
 postprocessing/         Notebooks for the analysis of the results
+  resources/            Input data for the two-temperature model
   pp_data/              Processed data for the figures
   figures/              Figures and representative OVITO snapshots
 ```

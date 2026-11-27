@@ -111,3 +111,16 @@ cases:
         std: 0.05
         min: 0.03
         max: 0.2
+  - name: phi006_r024
+    fiber:
+      radius_lattice: 24
+    geometry_seeds: [42, 43, 44]
+    fillings: [0.0, 2.0]
+    bubbles:
+      void_fraction: 0.06
+      min_surface_ligament_ratio: 1.0
+      diameter_fraction:
+        mean: 0.1
+        std: 0.03333333333333333
+        min: 0.02
+        max: 0.13333333333333333

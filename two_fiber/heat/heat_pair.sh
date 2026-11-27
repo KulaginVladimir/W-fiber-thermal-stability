@@ -53,4 +53,9 @@ mpirun -np "$SLURM_NTASKS" "$LMP" \
 
 gzip -f w_clusters.txt
 cp initial_state.txt heat.txt impact.txt heat_off.txt final.data log.lammps w_clusters.txt.gz he_release.txt "$OUT/"
+
+if [ -f dump_mech.lammpstrj.gz ]; then
+    cp dump_mech.lammpstrj.gz "$OUT/"
+fi
+
 rm -rf "$TMP"
